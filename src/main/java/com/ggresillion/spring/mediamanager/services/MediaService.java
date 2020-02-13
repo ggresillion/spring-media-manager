@@ -5,6 +5,7 @@ import com.ggresillion.spring.mediamanager.configurations.MediaManagerConfigurat
 import com.ggresillion.spring.mediamanager.dto.Media;
 import com.ggresillion.spring.mediamanager.dto.MediaContent;
 import com.ggresillion.spring.mediamanager.exceptions.MediaException;
+import com.ggresillion.spring.mediamanager.exceptions.MediaNotFound;
 import com.ggresillion.spring.mediamanager.models.MediaEntity;
 import com.ggresillion.spring.mediamanager.models.MediaScaleEntity;
 import com.ggresillion.spring.mediamanager.repositories.MediaRepository;
@@ -32,8 +33,7 @@ import java.util.UUID;
 @Service
 public class MediaService {
 
-    private final static String MEDIA_NOT_FOUND = "media not found";
-    private final static String SIZE_NOT_FOUND = "size not found";
+    private final static String SIZE_NOT_FOUND = "Size not found";
 
     Logger logger = LoggerFactory.getLogger(MediaScaleEntity.class);
 
@@ -55,9 +55,8 @@ public class MediaService {
      * Get all medias
      *
      * @return content as InputStream
-     * @throws MediaException media not found
      */
-    public Page<Media> getMedias(Pageable pageable) throws MediaException {
+    public Page<Media> getMedias(Pageable pageable) {
         return mediaRepository.findAll(pageable).map(this::toDto);
     }
 
@@ -68,9 +67,9 @@ public class MediaService {
      * @return content as InputStream
      * @throws MediaException media not found
      */
-    public MediaContent getMedia(int id) throws MediaException {
+    public MediaContent getMedia(int id) throws MediaException, MediaNotFound {
         MediaEntity<?> media = mediaRepository.findById(id)
-                .orElseThrow(() -> new MediaException(MEDIA_NOT_FOUND));
+                .orElseThrow(MediaNotFound::new);
         return toDto(media, uploadClient.getFile(media.getUuid()));
     }
 
@@ -81,12 +80,12 @@ public class MediaService {
      * @return content as InputStream
      * @throws MediaException media not found
      */
-    public MediaContent getMedia(int id, String size) throws MediaException {
+    public MediaContent getMedia(int id, String size) throws MediaException, MediaNotFound {
         if (size == null) {
             return getMedia(id);
         }
         MediaEntity<?> media = mediaRepository.findById(id)
-                .orElseThrow(() -> new MediaException(MEDIA_NOT_FOUND));
+                .orElseThrow(MediaNotFound::new);
         for (MediaScaleEntity<?> mediaScale : media.getMediaScales()) {
             if (mediaScale.getSize().equals(size)) {
                 return toDto(media, uploadClient.getFile(mediaScale.getUuid()));

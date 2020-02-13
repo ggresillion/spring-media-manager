@@ -3,6 +3,7 @@ plugins {
 	id 'io.spring.dependency-management' version '1.0.8.RELEASE'
 	id 'java'
 	id 'java-library'
+	id 'maven-publish'
 }
 
 group = 'com.ggresillion.spring'
@@ -23,6 +24,54 @@ jar {
 
 test {
 	useJUnitPlatform()
+}
+
+task sourceJar(type: Jar) {
+	classifier "sources"
+	from sourceSets.main.allJava
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+	classifier "javadoc"
+	from javadoc.destinationDir
+}
+
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			pom {
+				name = 'Spring Media Manager'
+				description = 'Library to ease the use of medias within Spring projects'
+				licenses {
+					license {
+						name = 'The Apache License, Version 2.0'
+						url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+					}
+				}
+			}
+			groupId group
+			artifactId rootProject.name
+			version version
+
+			from components.java
+
+			artifact(sourceJar) {
+				classifier = 'sources'
+			}
+			artifact(javadocJar) {
+				classifier = 'javadoc'
+			}
+		}
+	}
+//	repositories {
+//		maven {
+//			url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+//			credentials {
+//				username sonatypeUsername
+//				password sonatypePassword
+//			}
+//		}
+//	}
 }
 
 dependencies {
